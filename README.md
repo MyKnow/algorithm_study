@@ -32,7 +32,7 @@ algorithm_study/
 │               │   │   └─ p1966/
 │               │   │       ├─ Main_정민호.java
 │               │   │       ├─ Main_홍길동.java
-│               │   │       └─ README.md
+│               │   │       └─ problem.md
 │               │   └─ d02/
 │               │       └─ ...
 │               └─ a02_.../
@@ -47,6 +47,7 @@ algorithm_study/
 │       ├─ 03_start_solve.sh
 │       └─ 04_submit_code.sh
 │
+├─ ...
 ├─ .gitignore
 └─ README.md
 ```
