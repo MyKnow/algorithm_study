@@ -1,4 +1,4 @@
-package main.java.study.a01_ds.d01.p2504;
+package main.java.study.a01_ds.d02.p2504;
 import java.util.*;
 import java.io.*;
 
