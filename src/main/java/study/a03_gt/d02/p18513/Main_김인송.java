@@ -1,3 +1,5 @@
+package main.java.study.a03_gt.d02.p18513;
+
 import java.io.*;
 import java.util.*;
 
