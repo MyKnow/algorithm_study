@@ -9,144 +9,135 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Main_조은진 {
-    //1. 어차피 5번은 정해져 있음->5번 범위를 다 하고 하자.
-	//이거 조합 문제랑 비슷하게 풀면 된다. 백트래킹으로 가면 된다. 4^8*24?->약 157만
-	static int[][] currentfield;//벽은 -1로 치환.현재 장소에 몇개의 cctv가 겹쳐 있는지 확인한다.
-	static boolean[][] notRoom;//해당 장소에 cctv가 있는지 확인. cctv 있는 곳은 마크도 캔슬도 안할 거임
-	static int N, M, cctvnum, minRes;
-	static List<int[]> cctvInfo;//cctv 위치 기록. 0->row, 1->col, 2->몇번인지
-
+   static int R, C, T;
+	static int[][] currentfield;
+	static int[]dx= {-1,1,0,0};
+	static int[]dy= {0,0,-1,1};
+	static int cleanerrow;//공기 청정기의 아래 부분을 가리키는 거
 	
-	public static void mark(int cctvnum, int dir, int cctvRow, int cctvCol, int option) {
-		
-		boolean[] command=new boolean[4];
-		
-		switch(cctvnum) {
-		case 1:
-			command[dir]=true;
-			break;
-		case 2:
-			if(dir/2==0) {
-				command[0]=true;
-				command[1]=true;
-			}else {
-				command[2]=true;
-				command[3]=true;
-			}
-			break;
-		case 3:
-			// 0 2 0 3 1 2 1 3
-			command[dir/2]=true;
-			command[(dir%2)+2]=true;
-			break;
-		case 4:
-			Arrays.fill(command, true);
-			command[dir]=false;
-			break;
-		}
-		
-		if(command[0])forUp(option, cctvRow, cctvCol);
-		if(command[1])forDown(option, cctvRow, cctvCol);
-		if(command[2])forLeft(option, cctvRow, cctvCol);
-		if(command[3])forRight(option, cctvRow, cctvCol);
+	static boolean oob(int row, int col) {
+		if(row>=0&&row<R&&col>=0&&col<C) return false;
+		return true;
 	}
-
 	
-	public static void backtracking(int cnt) {
-		if(cnt==cctvnum) {
-			int curRes=0;
-			for(int i=0; i<N; i++) {
-				for(int j=0; j<M; j++) {
-					if(!notRoom[i][j]&&currentfield[i][j]==0)++curRes;
+	static void spread() {
+		
+		int[][] temp=new int[R][C];
+		//일단 오리지널 넘버를 토대로 줄어준걸 더함. 옆에 있는 것도 더함. 어차피 original numbers를 기준으로 누적
+		for(int i=0; i<R; i++) {
+			for(int j=0; j<C; j++) {
+				if(currentfield[i][j]<=0) continue;
+				int cnt=0;
+				for(int k=0; k<4; k++) {
+					int nx=i+dx[k]; int ny=j+dy[k];
+					if(!oob(nx, ny)&&currentfield[nx][ny]!=-1) {
+						++cnt;
+						temp[nx][ny]+=(currentfield[i][j]/5);
+					}
 				}
+				temp[i][j]+=(currentfield[i][j]-cnt*(currentfield[i][j]/5));
 			}
-			minRes=Math.min(curRes, minRes);
-			return;
 		}
-		int[] curCctv=cctvInfo.get(cnt);
-		for(int i=0; i<4; i++) {
-			mark(curCctv[2], i, curCctv[0], curCctv[1], 1);
-			backtracking(cnt+1);
-			mark(curCctv[2], i, curCctv[0], curCctv[1], -1);
-		}
-	}
 	
-	public static void forUp(int change, int row, int col) {
-		for(int i=row-1; i>=0; i--) {
-			if(currentfield[i][col]==-1)break;
-			currentfield[i][col]+=change;
+		//더해 준 것들을 다 옯긴다. 
+		for(int i=0; i<R; i++) {
+			for(int j=0; j<C; j++) {
+				if(currentfield[i][j]!=-1)currentfield[i][j]=temp[i][j];
+			}
 		}
-	}
+		
+	}//1000*2500*4*2=2000만 정도
 	
-	public static void forDown(int change, int row, int col) {
-		for(int i=row+1; i<N; i++) {
-			if(currentfield[i][col]==-1)break;
-			currentfield[i][col]+=change;
+	static void clean() {
+		int prev=currentfield[cleanerrow-1][1];
+		currentfield[cleanerrow-1][1]=0;
+		int current=0;
+		for(int i=2; i<C; i++) {
+			current=currentfield[cleanerrow-1][i];
+			currentfield[cleanerrow-1][i]=prev;
+			prev=current;
 		}
-	}
-	
-	public static void forLeft(int change, int row, int col) {
-		for(int i=col-1; i>=0; i--) {
-			if(currentfield[row][i]==-1)break;
-			currentfield[row][i]+=change;
+		for(int i=cleanerrow-2; i>=0; i--) {
+			current=currentfield[i][C-1];
+			currentfield[i][C-1]=prev;
+			prev=current;
 		}
-	}
-	
-	public static void forRight(int change, int row, int col) {
-		for(int i=col+1; i<M; i++) {
-			if(currentfield[row][i]==-1)break;
-			currentfield[row][i]+=change;
+		for(int i=C-2; i>=0; i--) {
+			current=currentfield[0][i];
+			currentfield[0][i]=prev;
+			prev=current;
 		}
-	}
-	
-	public static void checkFive(List<int[]> fiveLocation) {
-		for(int cindex=0; cindex<fiveLocation.size(); cindex++) {
-			int[] cctvLoc=fiveLocation.get(cindex);
-			int row=cctvLoc[0]; int col=cctvLoc[1];
-			forUp(1, row, col);
-			forDown(1, row, col);
-			forLeft(1, row, col);
-			forRight(1, row, col);
+		for(int i=1; i<cleanerrow-1; i++) {
+			current=currentfield[i][0];
+			currentfield[i][0]=prev;
+			prev=current;
 		}
-	}
+		
+		prev=currentfield[cleanerrow][1];
+		currentfield[cleanerrow][1]=0;
+		for(int i=2; i<C; i++) {
+			current=currentfield[cleanerrow][i];
+			currentfield[cleanerrow][i]=prev;
+			prev=current;
+		}
+		for(int i=cleanerrow+1; i<R; i++) {
+			current=currentfield[i][C-1];
+			currentfield[i][C-1]=prev;
+			prev=current;
+		}
+		for(int i=C-2; i>=0; i--) {
+			current=currentfield[R-1][i];
+			currentfield[R-1][i]=prev;
+			prev=current;
+		}
+		
+		for(int i=R-2; i>cleanerrow; i--) {
+			current=currentfield[i][0];
+			currentfield[i][0]=prev;
+			prev=current;
+		}
+		
+		
+	}//1000*75->75000 정도
 	
 	public static void main(String[] args) throws IOException {
 		BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
 		StreamTokenizer st=new StreamTokenizer(br);
 		
 		st.nextToken();
-		N=(int)st.nval;
+		R=(int)st.nval;
+		
 		st.nextToken();
-		M=(int)st.nval;
+		C=(int)st.nval;
 		
-		currentfield=new int[N][M];
-		notRoom=new boolean[N][M];
-		List<int[]> fiveLocation=new ArrayList<>();
-		cctvInfo=new ArrayList<>();
-		minRes=Integer.MAX_VALUE;
+		st.nextToken();
+		T=(int)st.nval;
 		
-		for(int i=0; i<N; i++) {
-			for(int j=0; j<M; j++) {
+		currentfield=new int[R][C];
+		
+		for(int i=0; i<R; i++) {
+			for(int j=0; j<C; j++) {
 				st.nextToken();
-				int num=(int)st.nval;
-				if(num>0) notRoom[i][j]=true;
-				
-				if(num==6) {
-					currentfield[i][j]=-1;
-				}else if(num==5) {
-					fiveLocation.add(new int[] {i, j});
-				}else if(num>0) {
-					cctvInfo.add(new int[] {i, j, num});
-					++cctvnum;
-				}
+				currentfield[i][j]=(int)st.nval;
+				if(currentfield[i][j]==-1) cleanerrow=i;
 			}
 		}
 		
-		checkFive(fiveLocation);
-		backtracking(0);
+		for(int i=0; i<T; i++) {
+			spread();
+			clean();
+		}
 		
 		
-		System.out.println(minRes);
+		int res=0;
+		
+		for(int i=0; i<R; i++) {
+			for(int j=0; j<C; j++) {
+				if(currentfield[i][j]!=-1)res+=currentfield[i][j];
+			}
+		}
+		
+		System.out.println(res);
 		
 		br.close();
 	}
